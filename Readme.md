@@ -16,7 +16,7 @@ Just upload the zip-file, parse it graph it and download the parsed files it.
 ## Working with webnetworkdump
 
 Index
-![Index](images/index.png)
+![Index](images/Index.png)
 
 Upload
 ![Upload](images/Upload.png)
