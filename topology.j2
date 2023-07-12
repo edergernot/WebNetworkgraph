@@ -1,0 +1,26 @@
+{
+  "name": "Networkdump.zip",
+  "type": "graphite",
+  "source": "netbox",
+  "motd": "Start Graphite and open http://localhost:8080/graphite to upload and view the topology: docker run -dt --rm -p 8080:80 --name graphite netreplica/graphite:latest",
+  "nodes": { {% for node in nodes: %}
+     "{{node['id']}}":{
+       "shortname":  "{{node['id']}}",
+       "kind": "{{node['type']}}"
+       }{% if not loop.last %},{% endif %}{% endfor %}
+    },
+  "links": [ {% for link in links: %}
+    {
+      "a": {
+        "node": "{{link['from']}}",
+        "interface": "{{link['local_port']}}",
+        "peer": "z"
+      },
+      "z": {
+        "node": "{{link['to']}}",
+        "interface": "{{link['remote_port']}}",
+        "peer": "a"
+      }
+    }{% if not loop.last %},{% endif %} {% endfor %}
+  ]
+}

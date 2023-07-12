@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block content %}
+<table class="table table-bordered table-hover table-sm">
+    <h3> Tests: </h3>
+    <thead>
+        <tr><h2>
+        <th>Test</th>
+        <th>Enabled</th>
+        <th>IP</th>
+        </tr></h2>
+        {% for test in testdata %}
+        <tr>
+            <td>{{test}}</td>
+            <td>{{testdata[test]['enabled']}}</td>
+            <td>{{testdata[test]['ip']}}</td>
+        </tr>
+        {% endfor %}
+    </tr>
+    </thead>
+</table>
+
+
+{% endblock content %}

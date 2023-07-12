@@ -1,0 +1,12 @@
+./input_files/*
+./input_files
+input_files
+./output_files
+./output_files/*
+output_files
+./venv
+./venv/*
+venv
+__pycache__
+./__pycache__
+./__pycache__/*

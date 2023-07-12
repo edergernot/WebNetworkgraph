@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block content %}
+<table class="table table-bordered table-hover table-sm">
+    <h3> Keys in parsed data : </h3>
+    <thead>
+        {% for key in keys %}
+            <tbody>
+                <tr>
+                    <td scope="row">{{ key }}</td>
+                </tr>
+            </tbody>
+        {% endfor %}
+    </thead>
+</table>
+{% endblock content %}

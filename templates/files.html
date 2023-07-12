@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block content %}
+<table class="table table-bordered table-hover table-sm">
+    <h3> Files Uploaded : </h3>
+    <thead>
+        {% for file in files %}
+            <tbody>
+                <tr>
+                    <td scope="row">{{ file }}</td>
+                </tr>
+            </tbody>    
+        {% endfor %}
+    </thead>
+</table>
+
+
+{% endblock content %}
