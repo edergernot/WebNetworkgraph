@@ -104,7 +104,7 @@ def start_graph():
     process = subprocess.Popen(['python', 'graphs.py'])
     webbrowser.open('http://localhost:8050',1)
     content=get_status()
-    return render_template("index.html",status=content)
+    return render_template("graph.html",status=content)
    
 @app.route('/parse')
 def parse():
