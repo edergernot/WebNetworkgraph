@@ -9,8 +9,6 @@ import subprocess
 import webbrowser
 import pandas
 
-
-
 ############## Logging Level #################
 #logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.ERROR)
@@ -112,10 +110,11 @@ def parse():
     global data
     files = [f for f in os.listdir(UPLOAD_FOLDER) if os.path.isfile(f"{UPLOAD_FOLDER}/{f}")]
     NoFiles=len(files)
-    if "parsed_data.json" in files:
-        with open (f"{UPLOAD_FOLDER}/parsed_data.json") as f:
-            data = json.load(f)
-    else:
+    #if "parsed_data.json" in files:
+    #    with open (f"{UPLOAD_FOLDER}/parsed_data.json") as f:
+    #        data = json.load(f)
+    #else:
+    if True:  ### WOrkarround to do allways a fresh Parse
         for file in files:
             if file[-12:] != '_command.txt': # Check if Raw output file
                 continue
@@ -179,8 +178,6 @@ def download():
     shutil.make_archive(f"{OUTPUT_FOLDER}/NetworkDumpParsed", "zip", f"{UPLOAD_FOLDER}")
     path = f"{OUTPUT_FOLDER}/NetworkDumpParsed.zip"
     return send_file(path, as_attachment=True)
-
-
 
 @app.route('/files')
 def files():

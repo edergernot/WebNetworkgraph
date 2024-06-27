@@ -5,4 +5,3 @@ dash
 dash-cytoscape
 openpyxl
 pandas
-
