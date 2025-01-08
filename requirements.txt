@@ -5,3 +5,4 @@ dash
 dash-cytoscape
 openpyxl
 pandas
+pyats-genie-command-parse

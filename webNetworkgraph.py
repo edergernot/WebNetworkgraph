@@ -8,6 +8,7 @@ import logging
 import subprocess
 import webbrowser
 import pandas
+import dump_diff
 
 ############## Logging Level #################
 #logging.basicConfig(level=logging.DEBUG)
@@ -20,8 +21,21 @@ OUTPUT_FOLDER = './output_files'
 RUNNING = f'{OUTPUT_FOLDER}/running'
 data ={}  # Dict with all parsed Data
 
+
+### Used for do a diff
+INPUT_FOLDER="./input"
+INPUTFOLDER="./input"
+DIFFFOLDER="./diff"
+WORKDIRS=[]
+DEVICES=[]
+WORKFILES=[]
+parsed1={}
+parsed2={}
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['INPUT_FOLDER'] = INPUT_FOLDER
+app.secret_key = 'B1178997E6F728FA9AF2C087DE6DEA4A'  #used to avoid session highjacking
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -177,6 +191,42 @@ def download():
         df.to_excel(f'{UPLOAD_FOLDER}/{k}.xlsx')
     shutil.make_archive(f"{OUTPUT_FOLDER}/NetworkDumpParsed", "zip", f"{UPLOAD_FOLDER}")
     path = f"{OUTPUT_FOLDER}/NetworkDumpParsed.zip"
+    return send_file(path, as_attachment=True)
+
+@app.route('/diff', methods=['GET', 'POST'])
+def diff():
+    '''Upload 2 files taken Networkdunp-Files and do a diff'''
+    content=get_status()
+    if request.method == 'POST':
+        # check if the post request has the file part
+        print (request.files)
+        if 'file1' and 'file2' not in request.files:
+            flash('File Missing!')
+            return redirect(request.url)
+        file1 = request.files['file1']
+        file2 = request.files['file2']
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        print (f"File1: {file1}")
+        print (f"File1: {file2}")
+        if file1.filename or file2.filename == '':
+            flash('Missing File')
+            return redirect(request.url)
+        if file1 and allowed_file(file1.filename) and file2 and allowed_file(file2.filename):
+            filename1 = secure_filename(file1.filename)
+            filename2 = secure_filename(file2.filename)
+            file1.save(os.path.join(app.config['INPUT_FOLDER'], filename1))
+            file2.save(os.path.join(app.config['INPUT_FOLDER'], filename2))
+            dump_diff.readfiles()
+            dump_diff.create_devices()
+            dump_diff.parse_devices()
+        return render_template("diff_done.html",status=content )        
+    return render_template("diff.html",status=content)
+
+@app.route('/diff_done')
+def diff_done():
+    shutil.make_archive(f"{DIFFFOLDER}/NetworkDumpDiff", "zip", f"{DIFFFOLDER}")
+    path = f"{DIFFFOLDER}/NetworkDumpDiff.zip"
     return send_file(path, as_attachment=True)
 
 @app.route('/files')
