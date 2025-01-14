@@ -12,6 +12,7 @@ COPY  assets ./assets
 
 RUN mkdir output_files
 RUN mkdir input_files
+RUN mkdir diff
 
 EXPOSE 5100
 EXPOSE 8050

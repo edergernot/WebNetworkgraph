@@ -5,7 +5,7 @@ from pyats_genie_command_parse import GenieCommandParse
 import json
 from genie.utils.diff import Diff
 
-INPUTFOLDER="./input"
+INPUTFOLDER="./input_files"
 DIFFFOLDER="./diff"
 WORKDIRS=[]
 DEVICES=[]
@@ -18,7 +18,7 @@ def readfiles():
     try:
         files = os.listdir(INPUTFOLDER)
         if len(files) != 2:
-            print("There have to be exctly 2 input files")
+            print("There must exctly 2 input files")
             return
     except Exception as e:
         print(f"Error during fileoperation: \n{e}")
@@ -87,7 +87,9 @@ def getnos(device):
                 nos2=line.split(',')[1]
                 continue
     except Exception as e:
-        print(f"Error finding NOS: using iso\n{e}")
+        print(f"Error finding NOS: using ios\n{e}")
+        nos1="cisco_ios"
+        nos2="cisco_ios"
     nos1 = netmiko_to_genie(nos1)
     nos2 = netmiko_to_genie(nos2)
     return([nos1,nos2])
@@ -159,6 +161,7 @@ def parse_devices():
         with open (f'{path2}/parsed_data.json', 'w') as file: # write json file
             file.write(json.dumps(parsed2, indent=4))
         print(f"JsonDumpfile2 of for device {device} was written")
+    
     #### Do diff #####
         for key in parsed1[device]:
             data1=parsed1[device][key]
@@ -169,7 +172,7 @@ def parse_devices():
                 continue
             with open(f"{DIFFFOLDER}/{device}/diff.txt", "a") as file:
                 file.write(f"{key} : \n-------------------\n{dd}\n------------------------------------------------------------------------\n")
-        
+        print(f"Diff for device {device} was written")
 
 if __name__ == "__main__":
     ### Used to run as single App and do a diff for Files in Input Folder

@@ -23,8 +23,8 @@ data ={}  # Dict with all parsed Data
 
 
 ### Used for do a diff
-INPUT_FOLDER="./input"
-INPUTFOLDER="./input"
+INPUT_FOLDER="./input_files"
+INPUTFOLDER="./input_files"
 DIFFFOLDER="./diff"
 WORKDIRS=[]
 DEVICES=[]
@@ -200,33 +200,42 @@ def diff():
     if request.method == 'POST':
         # check if the post request has the file part
         print (request.files)
-        if 'file1' and 'file2' not in request.files:
+        if 'file1' not in request.files or 'file2' not in request.files:
             flash('File Missing!')
             return redirect(request.url)
+        
         file1 = request.files['file1']
         file2 = request.files['file2']
+
         # If the user does not select a file, the browser submits an
         # empty file without a filename.
         print (f"File1: {file1}")
-        print (f"File1: {file2}")
-        if file1.filename or file2.filename == '':
+        print (f"File2: {file2}")
+        print(file1.filename)
+        print(file2.filename)
+        if file1.filename == '' or file2.filename == '':
             flash('Missing File')
             return redirect(request.url)
+        
         if file1 and allowed_file(file1.filename) and file2 and allowed_file(file2.filename):
             filename1 = secure_filename(file1.filename)
             filename2 = secure_filename(file2.filename)
             file1.save(os.path.join(app.config['INPUT_FOLDER'], filename1))
             file2.save(os.path.join(app.config['INPUT_FOLDER'], filename2))
+            flash('Files successfully uploaded')
+
             dump_diff.readfiles()
             dump_diff.create_devices()
             dump_diff.parse_devices()
-        return render_template("diff_done.html",status=content )        
+        content=get_status()
+        return redirect('/diff_done')        
     return render_template("diff.html",status=content)
 
 @app.route('/diff_done')
 def diff_done():
-    shutil.make_archive(f"{DIFFFOLDER}/NetworkDumpDiff", "zip", f"{DIFFFOLDER}")
-    path = f"{DIFFFOLDER}/NetworkDumpDiff.zip"
+    shutil.make_archive(f"{OUTPUT_FOLDER}/NetworkDumpDiff", "zip", f"{DIFFFOLDER}")
+    path = f"{OUTPUT_FOLDER}/NetworkDumpDiff.zip"
+    flash('Diff Done')
     return send_file(path, as_attachment=True)
 
 @app.route('/files')
@@ -250,6 +259,19 @@ def delete():
         shutil.rmtree(f"{OUTPUT_FOLDER}", ignore_errors=False, onerror=None)
     path = os.path.join("./",f"{OUTPUT_FOLDER[2:]}")
     os.mkdir(path)
+    if os.path.exists(f"{DIFFFOLDER}"):
+        shutil.rmtree(f"{DIFFFOLDER}", ignore_errors=False, onerror=None)
+    path = os.path.join("./",f"{DIFFFOLDER[2:]}")
+    os.mkdir(path)
+    existing_folders = [f for f in os.listdir() if os.path.isdir(f)]
+    folderneedet = ['templates', 'static', '.venv', 'diff', 'input_files', 'output_files', 'images', '__pycache__', '.git', 'assets']
+    for folder in existing_folders:
+        if folder in folderneedet:
+            continue
+        shutil.rmtree(folder)
+        print (f"Delete Folder: {folder}")
+    print ('Cleanup successful\n')
     return redirect('/')
 
-app.run(host='0.0.0.0', port=5100)
+
+app.run(host='0.0.0.0', port=5100, debug=False)
