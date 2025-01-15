@@ -97,6 +97,7 @@ def getnos(device):
 
 def parse_devices():
     for device in DEVICES:
+        supported_nos=['viptela', 'cheetah', 'dnac', 'comware', 'apic', 'asa', 'iosxe', 'iosxr', 'linux', 'ios', 'nxos', 'bigip', 'junos', 'ironware', 'aireos', 'sros', 'gaia']
         parsed1[device]={}
         parsed2[device]={}
         print(f"Parsing Device {device} ...")
@@ -111,6 +112,9 @@ def parse_devices():
         clock2=(commands2[1].split('**----------------------------------------**')[1])
         nos1 = getnos(device)[0]
         nos2 = getnos(device)[1]
+        if nos1 not in supported_nos or nos2 not in supported_nos:
+            print(f"Device {device} has an unsupported NOS")
+            continue    
         parse_obj1=GenieCommandParse(nos=nos1)
         parse_obj2=GenieCommandParse(nos=nos2)
         # Create Directory Structure
@@ -136,27 +140,44 @@ def parse_devices():
                 return_string=command.split('**----------------------------------------**')[1]
             except IndexError:
                 continue
-            try:
-                data=parse_obj1.parse_string(show_command=send_command,show_output_data=return_string)
-            except Exception as e:
-                print(f"Somthing went wrong on parsing command:{send_command}\n{e}")
+            if " vrf " in send_command: # if vrf is in command, parse without vrf
+                try:
+                    testcommand = send_command.split(" vrf ")[0]
+                    data=parse_obj1.parse_string(show_command=testcommand,show_output_data=return_string)
+                except Exception as e:
+                    #print(f"Somthing went wrong on parsing command:{send_command}\n{e}")
+                    data={}   
+            else:
+                try:
+                    data=parse_obj1.parse_string(show_command=send_command,show_output_data=return_string)
+                except Exception as e:
+                    #print(f"Somthing went wrong on parsing command:{send_command}\n{e}")
+                    data={}
             parsed1[device][send_command]=data
         with open (f'{path1}/parsed_data.json', 'w') as file: # write json file
             file.write(json.dumps(parsed1, indent=4))
         print(f"JsonDumpfile1 of for device {device} was written")
-        
         for command in commands2: # Parse 2nd file
+            data={}
             send_command=command.split('**----------------------------------------**')[0]
             send_command=send_command.strip()
             try:
                 return_string=command.split('**----------------------------------------**')[1]
             except IndexError:
                 continue
-            try:
-                data=parse_obj2.parse_string(show_command=send_command,show_output_data=return_string)
-            except Exception as e:
-                #print(f"Somthing went wrong on parsing command:{send_command}\n{e}")
-                pass
+            if " vrf " in send_command: # if vrf is in command, parse without vrf
+                try:
+                    testcommand = send_command.split(" vrf ")[0]
+                    data=parse_obj2.parse_string(show_command=testcommand,show_output_data=return_string)
+                except Exception as e:
+                    #print(f"Somthing went wrong on parsing command:{send_command}\n{e}")
+                    data={}
+            else:
+                try:
+                    data=parse_obj2.parse_string(show_command=send_command,show_output_data=return_string)
+                except Exception as e:
+                    #print(f"Somthing went wrong on parsing command:{send_command}\n{e}")
+                    data={}
             parsed2[device][send_command]=data
         with open (f'{path2}/parsed_data.json', 'w') as file: # write json file
             file.write(json.dumps(parsed2, indent=4))
@@ -166,7 +187,14 @@ def parse_devices():
         for key in parsed1[device]:
             data1=parsed1[device][key]
             data2=parsed2[device].get(key)
-            dd=Diff(data1, data2)
+            if key =="show cdp neighbors detail":
+                dd=Diff(data1, data2, exclude=["hold_time"])
+            elif key =="show interfaces" or key == "show interface trunk" or key == "show interfaces status" or key =="show interface switchport":
+                dd=Diff(data1, data2, exclude=["counters"])
+            elif key == "show arp" or key == "show ip arp":
+                dd=Diff(data1, data2, exclude=["age"])
+            else:
+                dd=Diff(data1, data2)
             dd.findDiff()
             if dd.diffs == []:
                 continue
