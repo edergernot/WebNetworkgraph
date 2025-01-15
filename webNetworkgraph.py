@@ -199,7 +199,7 @@ def diff():
     content=get_status()
     if request.method == 'POST':
         # check if the post request has the file part
-        print (request.files)
+        # print (request.files)
         if 'file1' not in request.files or 'file2' not in request.files:
             flash('File Missing!')
             return redirect(request.url)
@@ -209,10 +209,6 @@ def diff():
 
         # If the user does not select a file, the browser submits an
         # empty file without a filename.
-        print (f"File1: {file1}")
-        print (f"File2: {file2}")
-        print(file1.filename)
-        print(file2.filename)
         if file1.filename == '' or file2.filename == '':
             flash('Missing File')
             return redirect(request.url)
