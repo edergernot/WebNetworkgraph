@@ -1,5 +1,6 @@
 # WebNetworkGraph
-This is an extension for WebNetworkDump.
+This is an extension for WebNetworkDump.<br>
+Because of using PyATS for Diff it will nor run on Windows! Jou have to run it on WSL or Linux!
 
 Here you can Upload networkdump.zip files which were created with webnetworkdump : see: https://github.com/edergernot/webnetworkdump1.1 
 
@@ -43,4 +44,22 @@ Dumpfile
 
 
 ## Diff 2 Dumpfiles:
-Added Diff, which does a PyATS Diff. 
+Dumpfiles will parsed with PyATS and a diff of the parsed JSON - Data is done!
+
+Select Diff 2 Files and Choose NetworkDump.zip Files, Upload Button will start diff-Process
+![Diff](images/Diff.png)
+
+Diff is running:
+![Diff Running](images/Diff_Running.png)
+
+Diff-File will automaticly download when finished:
+![Diff Download](images/Diff_Downloads.png)
+
+In Diff-Zipfile there is a Folder for every Device:
+![Diff Files](images/Diff_files.png)
+
+In every Device-Folder is the "diff.txt" file as well as a Folder with parsed JSON Data from uploaded Dump-File.
+The diff.txt is in Linux diff style + - 
+![Diff Edit](images/diff_edit.png)
+
+Diff ignored counters for interfaces and age for CDP etc.
