@@ -9,6 +9,9 @@ import subprocess
 import webbrowser
 import pandas
 import dump_diff
+import requests
+import time
+from dotenv import load_dotenv
 
 ############## Logging Level #################
 #logging.basicConfig(level=logging.DEBUG)
@@ -20,6 +23,11 @@ ALLOWED_EXTENSIONS = {'zip'}
 OUTPUT_FOLDER = './output_files'
 RUNNING = f'{OUTPUT_FOLDER}/running'
 data ={}  # Dict with all parsed Data
+mac_vendor={}
+
+### Load API Key from .envcc
+load_dotenv()
+API_KEY = os.getenv("MAC_IOU_API_KEY")
 
 
 ### Used for do a diff
@@ -31,6 +39,7 @@ DEVICES=[]
 WORKFILES=[]
 parsed1={}
 parsed2={}
+
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -54,8 +63,32 @@ def unzip_all_files():
         shutil.unpack_archive(f"{UPLOAD_FOLDER}/{file}", UPLOAD_FOLDER)
         os.remove(f"{UPLOAD_FOLDER}/{file}")
 
+def get_mac_vendor(MAC):
+    global mac_vendor
+    IOU = MAC.replace(".","")[:6]
+    #print(f"check MAC: {MAC} IOU: {IOU}")
+    try:
+        vendor=mac_vendor[IOU]
+        return vendor
+    except KeyError: 
+        pass  
+    URL = f"https://api.maclookup.app/v2/macs/{MAC}/company/name?apiKey={API_KEY}"
+    response = requests.get(URL)
+    while response.status_code == 429:  #wait a Second for the next requests
+        time.sleep(1)
+        print("sleeped 1 second")
+        response = requests.get(URL)       
+    if response.status_code == 200:
+        mac_vendor[IOU]=response.text
+        print(f"{IOU} : {response.text}")
+        return (response.text)
+    return("Not Resolved")
+
 def add_to_data(key, parsed, hostname, vrf='NONE'):
     global data
+    MAC_IOU_Check = False
+    if "show_mac_addr" in key:
+        MAC_IOU_Check=True
     if key not in data.keys():
         data[key]=[]
     for line in parsed:
@@ -65,6 +98,9 @@ def add_to_data(key, parsed, hostname, vrf='NONE'):
             item['vrf']=vrf
         for k in line.keys():
             item[k]=line[k]
+        if MAC_IOU_Check:
+            item["MAC-Vendor"]=get_mac_vendor(line["destination_address"])
+
         data[key].append(item)
 
 @app.route("/")
