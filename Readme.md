@@ -6,6 +6,8 @@ Here you can Upload networkdump.zip files which were created with webnetworkdump
 
 I tested with Cisco IOS, IOS-XE, NX-OS, HP-Comware and Paloalto Firewalls.
 
+
+
 ## Easystart with DockerContainer on local maschine!
 
 - Get Container from Dockerhub
@@ -63,3 +65,25 @@ The diff.txt is in Linux diff style + -
 ![Diff Edit](images/diff_edit.png)
 
 Diff ignored counters for interfaces and age for CDP etc.
+
+## Run direct on Host
+Windows is not supported because of PyATS (Python Version < 3.12). You have to use WSL or Linux!<br>
+Clone the Repo:
+
+```git clone https://github.com/edergernot/WebNetworkgraph```
+
+For getting VendorCodes with the Mac-Tables create a .env file where the API-Key for the Mac-Vendorcode-API ist stored, like this. <br>
+You can get it here: https://maclookup.app/api-v2/documentation
+
+```MAC_IOU_API_KEY=abcdefghijklmnopqrstuvwxyz0123456789```
+
+Install the Requirements
+
+```pip install -r requirements.txt```
+
+Run the App:
+
+```python3 webNetworkgraph.py```
+
+Browse the Webinterface:
+http://localhost:5100

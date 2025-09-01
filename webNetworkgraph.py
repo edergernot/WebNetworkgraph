@@ -71,7 +71,11 @@ def get_mac_vendor(MAC):
         vendor=mac_vendor[IOU]
         return vendor
     except KeyError: 
-        pass  
+        pass 
+    if API_KEY == None:
+        return("Not Resolved, No Api Key")
+    if API_KEY == "":
+        return("Not Resolved, No Api Key")
     URL = f"https://api.maclookup.app/v2/macs/{MAC}/company/name?apiKey={API_KEY}"
     response = requests.get(URL)
     while response.status_code == 429:  #wait a Second for the next requests
