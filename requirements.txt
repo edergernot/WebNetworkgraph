@@ -11,3 +11,4 @@ pandas==1.5.3
 pyats-genie-command-parse
 Werkzeug==2.2.2
 numpy==1.24.1
+xlsxwriter==3.2.5

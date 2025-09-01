@@ -103,6 +103,143 @@ def add_to_data(key, parsed, hostname, vrf='NONE'):
 
         data[key].append(item)
 
+def generate_interfaceconfig_dict(interface_config:str)->dict:
+    # Generate a dict from interface configurations
+    interface:dict = {}
+    interface["speed"]="auto"
+    interface["duplex"]="auto"
+    interface["switchport_mode"]="Not configured!"
+    for line in interface_config.split("\n"):
+        if len(line)<=2:
+            continue
+        if line == "no switchport":
+            interface["switchport_mode"]="routed"
+        if "switchport mode" in line:
+            interface["switchport_mode"]=line.split()[-1].strip()
+            continue
+        if "description" in line:
+            interface["description"]=line.split("description")[1].strip()
+            continue
+        if "switchport access vlan" in line:
+            interface["vlan"]=line.split("vlan")[1].strip()
+            continue
+        if "switchport voice vlan" in line:
+            interface["voice-vlan"]=line.split("vlan")[1].strip()
+            continue
+        if "port-security maximum" in line:
+            interface["max_port_security"]=line.split("port-security")[1].strip()
+            continue
+        if "storm-control broadcast" in line:
+            interface["stormctl_broadcast"]=line.split("storm-control broadcast")[1].strip()
+            continue
+        if "storm-control multicast" in line:
+            interface["stormctl_multicast"]=line.split("storm-control multicast")[1].strip()
+            continue
+        if "storm-control action" in line:
+            interface["stormctl_action"]=line.split("storm-control action")[1].strip()
+            continue
+        if "access-session port-control auto" in line:
+            interface["Dot1x"] = "Enabled"
+            continue
+        if "authentication port-control auto" in line:
+            interface["Dot1x"] = "Enabled"
+            continue
+        if "mab" in line:
+            interface["Mab"] = "Enabled"
+            continue
+        if "service-policy type" in line:
+            interface["ServicePolicy"]=line.split("service-policy type")[1].strip()
+            continue
+        if "dot1x pae" in line:
+            interface["Dot1x_Int_Type"]=line.split("dot1x pae")[1].strip()
+            continue
+        if "speed" in line:
+            interface["speed"]=line.split("speed")[1].strip()
+            continue
+        if "duplex" in line:
+            interface["duplex"]=line.split("duplex")[1].strip()
+        if "channel-group" in line:
+            interface["portchannel"]=line.split("channel-group")[1].strip()
+        if "switchport trunk allowed vlan" in line:
+            try:
+                vlans=interface["trunk_vlans"]
+                vlans_add=line.split("add")[1].strip()
+                interface["trunk_vlans"]=vlans+vlans_add
+                continue
+            except KeyError:
+                interface["trunk_vlans"]=line.split("switchport trunk allowed vlan")[1].strip()
+                continue
+        if "device-tracking attach-policy" in line:
+            interface["device_tracking_policy"]=line.split("device-tracking attach-policy")[1].strip()
+        if "spanning-tree" in line:
+            try:
+                stp_setting=interface["spanning-tree"]
+                stp_additional_setting=line.split("spanning-tree")[1].strip()
+                interface["spanning-tree"]=stp_setting+" | "+stp_additional_setting
+                continue
+            except KeyError:
+                interface["spanning-tree"]=line.split("spanning-tree")[1].strip()
+                continue
+    return(interface)
+
+def write_interface_cfg_excel(all_interfaces):
+    import pandas as pd
+    df = pd.DataFrame(all_interfaces)
+    writer = pd.ExcelWriter(f'{UPLOAD_FOLDER}/interface_cfg.xlsx', engine='xlsxwriter')
+        
+    # Write the dataframe data to XlsxWriter. Turn off the default header and
+    # index and skip one row to allow us to insert a user defined header.
+    df.to_excel(writer, sheet_name='Sheet1', startrow=1, header=False, index=False)
+    
+    # Get the xlsxwriter workbook and worksheet objects.
+    workbook = writer.book
+    worksheet = writer.sheets['Sheet1']
+    
+    # Get the dimensions of the dataframe.
+    (max_row, max_col) = df.shape
+    
+    # Create a list of column headers, to use in add_table().
+    column_settings = [{'header': column} for column in df.columns]
+    
+    # Add the Excel table structure. Pandas will add the data.
+    worksheet.add_table(0, 0, max_row, max_col - 1, {'columns': column_settings}, )
+    
+    # Make the columns wider for clarity.
+    worksheet.set_column(0, max_col - 1, 15)
+         
+    # Close the Pandas Excel writer and output the Excel file.
+    writer._save()
+    
+def get_cdp_nei(interface,host):
+    global data
+    cdps=data["cisco_ios--show_cdp_neighbors_detail"]
+    for cdp in cdps:
+        if cdp["Devicename"]==host:
+            if cdp['local_port']==interface:
+                return(cdp['destination_host'])
+    return("")
+
+def generate_interface_cfg_excel(configdata):
+    all_interfaces=[]
+    for device in configdata:
+        interface_blobs=device['config'].split('!\ninterface')
+        for intconfig in interface_blobs:
+            interface_config_dict:dict={}
+            interface_config_dict['host']=device['Devicename']
+            if intconfig[:8]=="Building": 
+                continue
+            if intconfig[:5]==" Vlan":
+                continue
+            if intconfig[:4]==" App":
+                continue
+            interface_config_dict['interface']=intconfig.split("\n")[0].strip()
+            gererated_int_cfg = generate_interfaceconfig_dict(intconfig)
+            for key in gererated_int_cfg.keys():  
+                interface_config_dict[key]=gererated_int_cfg[key]
+            interface_config_dict["cdp"]=get_cdp_nei(interface_config_dict['interface'],interface_config_dict['host'])
+            all_interfaces.append(interface_config_dict)
+    write_interface_cfg_excel(all_interfaces)
+
 @app.route("/")
 def index():
     '''    Render Index Side '''
@@ -164,7 +301,7 @@ def parse():
     #    with open (f"{UPLOAD_FOLDER}/parsed_data.json") as f:
     #        data = json.load(f)
     #else:
-    if True:  ### WOrkarround to do allways a fresh Parse
+    if True:  ### Workarround to do allways a fresh Parse
         for file in files:
             if file[-12:] != '_command.txt': # Check if Raw output file
                 continue
@@ -202,7 +339,14 @@ def parse():
                             continue
                         key=platform+'--'+command.replace(' ','_')
                         add_to_data(key, parsed_vrf, hostname, vrf_name)
-
+                        continue
+                    if command == "show running":  # generate show running-config blob in data
+                        parsed=[]
+                        key=platform+'--'+command.replace(' ','_')
+                        running={'config':output}
+                        parsed.append(running)
+                        add_to_data(key, parsed, hostname)
+                        continue  
                     else:        
                         parsed=parse_files.parse_textfsm(command, output, platform)
                         if parsed==("Error","Error"):
@@ -215,7 +359,7 @@ def parse():
     with open (f'{UPLOAD_FOLDER}/parsed_data.json', 'w') as file: # write json file
         file.write(json.dumps(data, indent=4))   
     keys = data.keys()
-    content=get_status()            
+    content=get_status()          
     return render_template("parse.html",status=content, keys=keys)
 
 @app.route('/download')
@@ -223,6 +367,8 @@ def download():
     for k in data.keys():
         if data[k]== []:
             continue
+        if k == "cisco_ios--show_running":
+            generate_interface_cfg_excel(data[k])
         df = pandas.DataFrame(data[k])
         df.to_excel(f'{UPLOAD_FOLDER}/{k}.xlsx')
     shutil.make_archive(f"{OUTPUT_FOLDER}/NetworkDumpParsed", "zip", f"{UPLOAD_FOLDER}")
