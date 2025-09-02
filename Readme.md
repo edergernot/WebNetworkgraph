@@ -18,7 +18,7 @@ I tested with Cisco IOS, IOS-XE, NX-OS, HP-Comware and Paloalto Firewalls.
 
 Just upload the zip-file, parse it, graph it and download the parsed files.
 
-Note: For graphing it just uses CDP-Data from Cisco-IOS Devices. This will change soon
+Note: For graphing it just uses CDP-Data from Cisco-IOS Devices. 
 
 
 ## Working with webnetworkdump
@@ -35,6 +35,7 @@ View Files
 Parse
 ![Device View](images/Parse.png)
 
+
 Graph: If it do not open in a new Browserwindow go to http://localhost:8050
 ![Graph](images/Graph.png)
 
@@ -43,6 +44,20 @@ Download
 
 Dumpfile
 ![Dumpfile](images/Filecontext.png)
+
+- When data is parsed it generates a topology.json file which can be uploaded to graphite.<br>
+To run grafite : ```docker run -dt --rm -p 8080:80 --name graphite netreplica/graphite:latest```<br>
+the browse :http://localhost:8080/graphite/ <br>
+See : https://github.com/netreplica/graphite/
+
+Graphite
+![Graphite](images/graphite.png)
+
+Graphite - Data Drag & Drop
+![Graphite_Drag&Drop](images/graphite_drop.png)
+
+Graphite - Auto Drawing
+![Graphite_AutoDrawing](images/graphite_drawing.png)
 
 
 ## Diff 2 Dumpfiles:
@@ -65,6 +80,11 @@ The diff.txt is in Linux diff style + -
 ![Diff Edit](images/diff_edit.png)
 
 Diff ignored counters for interfaces and age for CDP etc.
+
+## Use draw.io for your diagrams
+
+
+
 
 ## Run direct on Host
 Windows is not supported because of PyATS (Python Version < 3.12). You have to use WSL or Linux!<br>

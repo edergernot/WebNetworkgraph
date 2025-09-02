@@ -361,7 +361,9 @@ def parse():
         
     
     with open (f'{UPLOAD_FOLDER}/parsed_data.json', 'w') as file: # write json file
-        file.write(json.dumps(data, indent=4))   
+        file.write(json.dumps(data, indent=4))
+    # generate Topology.json for Graphite
+    os.system("python generate_json.py")
     keys = data.keys()
     content=get_status()          
     return render_template("parse.html",status=content, keys=keys)
