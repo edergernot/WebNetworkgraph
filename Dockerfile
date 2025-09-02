@@ -15,6 +15,7 @@ COPY  templates ./templates/
 COPY  static ./static
 COPY  assets ./assets
 COPY  .env ./
+COPY topology.j2 ./
 
 RUN mkdir output_files
 RUN mkdir input_files
